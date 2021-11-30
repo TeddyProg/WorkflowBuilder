@@ -14,6 +14,11 @@ namespace WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        string FileName = "";
+        string DirPath = "Diagrams/";
+        List<string> paths = new List<string>();
+        string programsPath = "Programs/";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -27,18 +32,19 @@ namespace WpfApp
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Assign));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
+            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Input));
 
 
             if (!System.IO.Directory.Exists(DirPath))
             {
                 System.IO.Directory.CreateDirectory(DirPath);
             }
-            
+            if (!System.IO.Directory.Exists(programsPath))
+            {
+                System.IO.Directory.CreateDirectory(programsPath);
+            }
         }
 
-        string FileName = "";
-        string DirPath = "Diagrams/";
-        List<string> paths = new List<string>();
 
         private void Add_Diagram_Click(object sender, RoutedEventArgs e)
         {
@@ -90,7 +96,19 @@ namespace WpfApp
                 OutputLabel.Content = "Good";
             }
             else
-                OutputLabel.Content = "Hui";
+                OutputLabel.Content = "Bad";
+
+            string code = WorkflowAnalyzer.MakeProgram(Flowchart, FileName + "_program");
+            FileName = FileName.Replace('\\', '_').Replace('/', '_');
+            string path = $"{programsPath}/{FileName}.txt";
+
+            // The line below will create a text file, my_file.txt, in 
+            // the Text_Files folder in D:\ drive.
+            // The CreateText method that returns a StreamWriter object
+            using (StreamWriter sw = File.CreateText(path))
+            {
+                sw.Write(code);
+            }
 
             //var node = Flowchart.FindNode("Decision");
             //if (node != null)

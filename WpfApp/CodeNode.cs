@@ -2,6 +2,7 @@
 using System.Windows;
 using MindFusion.Diagramming.Wpf;
 using System.IO;
+using System;
 
 namespace WpfApp
 {
@@ -53,6 +54,25 @@ namespace WpfApp
         private string _variableName = "/*Here should be name of variable*/";
     }
 
+    class InputNode : CodeNode
+    {
+        public InputNode()
+        {
+
+        }
+        public InputNode(string varName)
+        {
+            _variableName = varName;
+        }
+
+        public override string SharpCode => $"{_variableName} = Convert.ToInt32(Console.ReadLine());";
+        public void SetVariableName(string newName)
+        {
+            _variableName = newName;
+        }
+        private string _variableName = "/*Here should be name of variable*/";
+    }
+
     class DeclareNode : CodeNode
     {
         public DeclareNode()
@@ -79,9 +99,10 @@ namespace WpfApp
         {
 
         }
-        public AssignNode(string varName)
+        public AssignNode(string varName, int varValue)
         {
             _variableName = varName;
+            _variableValue = varValue;
         }
 
         public override string SharpCode => $"{ _variableName } = { _variableValue};";

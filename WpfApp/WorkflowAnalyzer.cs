@@ -120,9 +120,9 @@ namespace WpfApp
             return true;
         }
 
-        private static bool ParseInputText(string decNodeText, out string varName)
+        private static bool ParseInputText(string inptNodeText, out string varName)
         {
-            var args = decNodeText.Split(' ');
+            var args = inptNodeText.Split(' ');
             varName = "/*incorrect variable name*/";
             if (args.Length != 2)
                 return false;
@@ -132,19 +132,47 @@ namespace WpfApp
             return true;
         }
 
-        private static bool ParseAssignText(string decNodeText, out string varName)
+        private static bool ParseAssignText(string assgnNodeText, out string varName, out int varValue)
         {
-            var args = decNodeText.Split(' ');
+            var args = assgnNodeText.Split(' ');
+            varValue = -1;
             varName = "/*incorrect variable name*/";
             if (args.Length != 3)
                 return false;
             if (args[1] != "=")
                 return false;
+            varName = args[0];
+            varValue = Convert.ToInt32(args[2]);
+            return true;
+        }
+
+        private static bool ParsePrintText(string prntNodeText, out string varName)
+        {
+            var args = prntNodeText.Split(' ');
+            varName = "/*incorrect variable name*/";
+            if (args.Length != 2)
+                return false;
+            if (args[0].ToLower() != "print:")
+                return false;
             varName = args[1];
             return true;
         }
 
-        public string MakeProgram(Diagram diag, string progName = "program")
+        private static string MakeTextFromCodeNodes(CodeNode startNode)
+        {
+            string res = "";
+
+            var curNode = startNode;
+            while(curNode != null)
+            {
+                res += curNode.SharpCode + '\n';
+                curNode = curNode.nextNode;
+            }
+
+            return res;
+        }
+
+        public static string MakeProgram(Diagram diag, string progName = "program")
         {
             if (!ValidateBlockDiagram(diag))
             {
@@ -158,6 +186,7 @@ namespace WpfApp
             curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
             CodeNode curCodeNode = startNode;
             string tmpString;
+            int tmpVal;
             while (curDiagNode != null)
             {
                 NodeType type = GetNodeTypeFromTag(curDiagNode.Tag);
@@ -166,27 +195,44 @@ namespace WpfApp
                     // it means that diagram is wrong, should show it some way
                     case NodeType.Begin:
                         curCodeNode.nextNode = new CommentNode("Unexpected begin node");
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
                         break;
                     case NodeType.End:
                         curCodeNode.nextNode = new EndNode();
+                        curDiagNode = null;
                         break;
                     case NodeType.Declare:
                         ParseDeclareText(curDiagNode.Text, out tmpString);
-                        curCodeNode.nextNode = new DeclareNode()
+                        curCodeNode.nextNode = new DeclareNode(tmpString);
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
                         break;
                     case NodeType.Assign:
+                        ParseAssignText(curDiagNode.Text, out tmpString, out tmpVal);
+                        curCodeNode.nextNode = new AssignNode(tmpString, tmpVal);
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
                         break;
                     case NodeType.Print:
+                        ParsePrintText(curDiagNode.Text, out tmpString);
+                        curCodeNode.nextNode = new PrintNode(tmpString);
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+                        break;
+                    case NodeType.Input:
+                        ParseInputText(curDiagNode.Text, out tmpString);
+                        curCodeNode.nextNode = new InputNode(tmpString);
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
                         break;
                     case NodeType.Unknown:
-                        break;
                     default:
+                        curCodeNode.nextNode = new CommentNode("Unknown node");
+                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
                         break;
                 }
                 curCodeNode = curCodeNode.nextNode;
             }
 
-            return "";
+            string res = MakeTextFromCodeNodes(startNode);
+
+            return res;
         }
     }
 }

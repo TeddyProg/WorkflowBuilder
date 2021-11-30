@@ -16,6 +16,7 @@ namespace WpfApp
         Declare,
         Assign,
         Print,
+        Input,
         Unknown
     }
 
@@ -50,7 +51,7 @@ namespace WpfApp
                         Shape = Shapes.RSave,
                         TextFormat = strFormat,
                         Tag = NodeType.Declare,
-                        Text = "varName"
+                        Text = "declare: varName"
                     };
                 case NodeType.Assign:
                     return new ShapeNode
@@ -66,7 +67,7 @@ namespace WpfApp
                         Shape = Shapes.RoundRect,
                         TextFormat = strFormat,
                         Tag = NodeType.Print,
-                        Text = "varName"
+                        Text = "Print: "
                     };
                 case NodeType.End:
                     return new ShapeNode
@@ -76,6 +77,15 @@ namespace WpfApp
                         Tag = NodeType.End,
                         Text = "End"
                     };
+                case NodeType.Input:
+                    return new ShapeNode
+                    {
+                        Shape = Shapes.Input,
+                        TextFormat = strFormat,
+                        Tag = NodeType.Input,
+                        Text = "Input:"
+                    };
+                    break;
                 case NodeType.Unknown:
                 default:
                     return null;
