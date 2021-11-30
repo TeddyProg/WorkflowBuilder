@@ -15,6 +15,15 @@ namespace WpfApp
 
     class BeginNode : CodeNode
     {
+        public BeginNode()
+        {
+
+        }
+        public BeginNode(string progName)
+        {
+            _programName = progName;
+        }
+
         public override string SharpCode => $"//Beggining of program { _programName }";
 
         public void SetProgramName(string newName)
@@ -26,6 +35,15 @@ namespace WpfApp
 
     class PrintNode : CodeNode 
     {
+        public PrintNode()
+        {
+
+        }
+        public PrintNode(string varName)
+        {
+            _variableName = varName;
+        }
+
         public override string SharpCode => $"Console.WriteLine({ _variableName });";
 
         public void SetVariableName(string newName)
