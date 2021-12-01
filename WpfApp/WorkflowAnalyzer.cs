@@ -13,101 +13,6 @@ namespace WpfApp
     class WorkflowAnalyzer
     {
 
-        private static NodeType GetNodeTypeFromTag(object tag)
-        {
-            return (NodeType)(int)tag;
-        }
-
-        /// <summary>
-        /// Check whether all nodes of given type has exact needed number of incoming and outgoing links
-        /// </summary>
-        /// <param name="diag">Diagram to analyze</param>
-        /// <param name="typeToCheck">Type to check in diagram</param>
-        /// <param name="numIncLinks">Num of links which should be incoming to node</param>
-        /// <param name="numOutLinks">Num of links which should be outgoing from node</param>
-        /// <returns>If all nodes of given type has correct number of links - true, false otherwise</returns>
-        private static bool CheckNumLinksOfNode(Diagram diag, NodeType typeToCheck, int numIncLinks, int numOutLinks)
-        {
-            var nodes = diag.Nodes;
-            foreach (var node in nodes)
-            {
-                if (node.Tag != null)
-                {
-                    NodeType nodeType = GetNodeTypeFromTag(node.Tag);
-                    if (nodeType == typeToCheck)
-                    {
-                        if (node.IncomingLinks.Count != numIncLinks || node.OutgoingLinks.Count != numOutLinks)
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
-        public static bool ValidateBlockDiagram(Diagram diag)
-        {
-            ///Checking that number of begin and end nodes equals 1
-            {
-                var nodes = diag.Nodes;
-                uint numBegs = 0;
-                uint numEnds = 0;
-                foreach (var node in nodes)
-                {
-                    if (node.Tag != null)
-                    {
-                        NodeType tagStr = GetNodeTypeFromTag(node.Tag);
-                        if (tagStr == NodeType.End)
-                            numEnds++;
-                        else if (tagStr == NodeType.Begin)
-                            numBegs++;
-                    }
-                }
-                if (numBegs != 1 || numEnds != 1)
-                    return false;
-            }
-            ////////////////////////////////////////////////////
-
-            ///Checking that there is only one link from starting node and no link into it
-            { 
-                if (!CheckNumLinksOfNode(diag, NodeType.Begin, 0, 1))
-                    return false;
-
-            }
-            ////////////////////////////////////////////////////////
-
-            ///Checking that there is only one link into ending node and no link from it
-            {
-                if (!CheckNumLinksOfNode(diag, NodeType.End, 1, 0))
-                    return false;
-            }
-            ////////////////////////////////////////////////////////
-
-            ///Checking that num of incoming and outgoing links of print nodes equals 1
-            {
-                if (!CheckNumLinksOfNode(diag, NodeType.Print, 1, 1))
-                    return false;
-            }
-            ////////////////////////////////////////////////////
-
-            ///Checking that num of incoming and outgoing links of assign nodes equals 1
-            {
-                if (!CheckNumLinksOfNode(diag, NodeType.Assign, 1, 1))
-                    return false;
-            }
-            ////////////////////////////////////////////////////
-
-            ///Checking that num of incoming and outgoing links of declare nodes equals 1
-            {
-                if (!CheckNumLinksOfNode(diag, NodeType.Declare, 1, 1))
-                    return false;
-            }
-            ////////////////////////////////////////////////////
-
-            return true;
-        }
-
         private static bool ParseDeclareText(string decNodeText, out string varName)
         {
             var args = decNodeText.Split(' ');
@@ -158,6 +63,12 @@ namespace WpfApp
             return true;
         }
 
+        private static bool ParseDecisionText(string cndNodeText, out string condText)
+        {
+            condText = cndNodeText;
+            return true;
+        }
+
         private static string MakeTextFromCodeNodes(CodeNode startNode)
         {
             string res = "";
@@ -172,63 +83,190 @@ namespace WpfApp
             return res;
         }
 
+        private static CodeNode GetCodeNode(DiagramNode dNode)
+        {
+            NodeType type = WorkflowUtils.GetNodeTypeFromTag(dNode.Tag);
+            CodeNode resNode;
+            switch (type)
+            {
+                case NodeType.Begin:
+                    resNode = new BeginNode();
+                    break;
+                case NodeType.End:
+                    resNode = new EndNode();
+                    break;
+                case NodeType.Declare:
+                    {
+                        string decVar;
+                        ParseDeclareText(dNode.Text, out decVar);
+                        resNode = new DeclareNode(decVar);
+                        break;
+                    }
+                case NodeType.Assign:
+                    {
+                        string assignVar;
+                        int varValue;
+                        ParseAssignText(dNode.Text, out assignVar, out varValue);
+                        resNode = new AssignNode(assignVar, varValue);
+                        break;
+                    }
+                case NodeType.Print:
+                    {
+                        string outputVar;
+                        ParsePrintText(dNode.Text, out outputVar);
+                        resNode = new PrintNode(outputVar);
+                        break;
+                    }
+                case NodeType.Input:
+                    {
+                        string inputVar;
+                        ParseInputText(dNode.Text, out inputVar);
+                        resNode = new InputNode(inputVar);
+                        break;
+
+                    }
+                case NodeType.Decision:
+                    {
+                        string cond;
+                        ParseDecisionText(dNode.Text, out cond);
+                        resNode = new ConditionNode(cond);
+                        break;
+                    }
+                case NodeType.Unknown:
+                default:
+                    resNode = new CommentNode("Unknown node");
+                    break;
+            }
+            return resNode;
+        }
+
+        private static CodeNode MakeCodeSequence(DiagramNode dNode)
+        {
+            CodeNode resNode = GetCodeNode(dNode);
+            CodeNode curCodeNode = resNode; 
+            while(dNode != null)
+            {
+                switch (curCodeNode.Type)
+                {
+                    case CodeType.Begin:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.End:
+                        dNode = null;
+                        break;
+                    case CodeType.Print:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.Declare:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.Input:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.Cycle:
+                        //TODO
+                        break;
+                    case CodeType.Condition:
+                        {
+                            ConditionNode condNode = curCodeNode as ConditionNode;
+                            var links = dNode.GetAllOutgoingLinks();
+                            List<int> inds = new List<int>();
+                            // TODO: Check if it`s only 1 outgoing link for each variant in condition
+                            for (int i = 0; i < links.Count; ++i)
+                            {
+                                var link = links[i];
+                                int ind = link.OriginIndex; // 3 - false, 2 - true
+                                inds.Add(ind);
+                                if (ind == 2) // true sequence
+                                {
+                                    condNode.TrueNodeSeq = MakeCodeSequence(link.Destination);
+                                }
+                                else if (ind == 3) // false sequence
+                                {
+                                    condNode.FalseNodeSeq = MakeCodeSequence(link.Destination);
+                                }
+                            }
+                            dNode = null;
+                            break;
+                        }
+                    case CodeType.Assign:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.Comment:
+                        dNode = dNode.OutgoingLinks[0].Destination;
+                        curCodeNode.nextNode = GetCodeNode(dNode);
+                        break;
+                    case CodeType.Unknown:
+                    default:
+                        return null;
+                }
+                curCodeNode = curCodeNode.nextNode;
+            }
+            return resNode;
+        }
+
         public static string MakeProgram(Diagram diag, string progName = "program")
         {
-            if (!ValidateBlockDiagram(diag))
+            if (!WorkflowValidator.ValidateBlockDiagram(diag))
             {
                 return "//Incorrect diagram!";
             }
 
-            BeginNode startNode = new BeginNode();
-            startNode.SetProgramName(progName);
+            CodeNode startNode = MakeCodeSequence(diag.FindNode(NodeType.Begin));
+            //startNode.SetProgramName(progName);
             
-            var curDiagNode = diag.FindNode(NodeType.Begin);
-            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            CodeNode curCodeNode = startNode;
-            string tmpString;
-            int tmpVal;
-            while (curDiagNode != null)
-            {
-                NodeType type = GetNodeTypeFromTag(curDiagNode.Tag);
-                switch (type)
-                {
-                    // it means that diagram is wrong, should show it some way
-                    case NodeType.Begin:
-                        curCodeNode.nextNode = new CommentNode("Unexpected begin node");
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                    case NodeType.End:
-                        curCodeNode.nextNode = new EndNode();
-                        curDiagNode = null;
-                        break;
-                    case NodeType.Declare:
-                        ParseDeclareText(curDiagNode.Text, out tmpString);
-                        curCodeNode.nextNode = new DeclareNode(tmpString);
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                    case NodeType.Assign:
-                        ParseAssignText(curDiagNode.Text, out tmpString, out tmpVal);
-                        curCodeNode.nextNode = new AssignNode(tmpString, tmpVal);
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                    case NodeType.Print:
-                        ParsePrintText(curDiagNode.Text, out tmpString);
-                        curCodeNode.nextNode = new PrintNode(tmpString);
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                    case NodeType.Input:
-                        ParseInputText(curDiagNode.Text, out tmpString);
-                        curCodeNode.nextNode = new InputNode(tmpString);
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                    case NodeType.Unknown:
-                    default:
-                        curCodeNode.nextNode = new CommentNode("Unknown node");
-                        curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-                        break;
-                }
-                curCodeNode = curCodeNode.nextNode;
-            }
+            //var curDiagNode = diag.FindNode(NodeType.Begin);
+            //curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //CodeNode curCodeNode = startNode;
+            //string tmpString;
+            //int tmpVal;
+            //while (curDiagNode != null)
+            //{
+            //    NodeType type = GetNodeTypeFromTag(curDiagNode.Tag);
+            //    switch (type)
+            //    {
+            //        // it means that diagram is wrong, should show it some way
+            //        case NodeType.Begin:
+            //            curCodeNode.nextNode = new CommentNode("Unexpected begin node");
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //        case NodeType.End:
+            //            curCodeNode.nextNode = new EndNode();
+            //            curDiagNode = null;
+            //            break;
+            //        case NodeType.Declare:
+            //            ParseDeclareText(curDiagNode.Text, out tmpString);
+            //            curCodeNode.nextNode = new DeclareNode(tmpString);
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //        case NodeType.Assign:
+            //            ParseAssignText(curDiagNode.Text, out tmpString, out tmpVal);
+            //            curCodeNode.nextNode = new AssignNode(tmpString, tmpVal);
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //        case NodeType.Print:
+            //            ParsePrintText(curDiagNode.Text, out tmpString);
+            //            curCodeNode.nextNode = new PrintNode(tmpString);
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //        case NodeType.Input:
+            //            ParseInputText(curDiagNode.Text, out tmpString);
+            //            curCodeNode.nextNode = new InputNode(tmpString);
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //        case NodeType.Unknown:
+            //        default:
+            //            curCodeNode.nextNode = new CommentNode("Unknown node");
+            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
+            //            break;
+            //    }
+            //    curCodeNode = curCodeNode.nextNode;
+            //}
 
             string res = MakeTextFromCodeNodes(startNode);
 

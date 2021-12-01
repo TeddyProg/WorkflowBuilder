@@ -17,6 +17,7 @@ namespace WpfApp
         Assign,
         Print,
         Input,
+        Decision,
         Unknown
     }
 
@@ -85,7 +86,15 @@ namespace WpfApp
                         Tag = NodeType.Input,
                         Text = "Input:"
                     };
-                    break;
+                case NodeType.Decision:
+                    return new ShapeNode
+                    {
+                        Shape = Shapes.Decision,
+                        TextFormat = strFormat,
+                        Tag = NodeType.Decision,
+                        AnchorPattern = AnchorPattern.Decision2In2Out,
+                        Text = "Decision"
+                    };
                 case NodeType.Unknown:
                 default:
                     return null;

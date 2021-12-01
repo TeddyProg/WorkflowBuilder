@@ -7,15 +7,34 @@ using System;
 namespace WpfApp
 {
 
+    enum CodeType
+    {
+        Begin,
+        End,
+        Print,
+        Declare,
+        Input,
+        Cycle,
+        Assign,
+        Comment,
+        Condition,
+        Unknown
+    }
+
     class CodeNode
     {
         public virtual string SharpCode => "Unknown";
+        public virtual CodeType Type => CodeType.Unknown;
 
         public CodeNode nextNode = null;
     }
 
     class BeginNode : CodeNode
     {
+        public override string SharpCode => $"//Beggining of program { _programName }";
+        private string _programName = "unknown";
+        public override CodeType Type => CodeType.Begin;
+
         public BeginNode()
         {
 
@@ -25,17 +44,19 @@ namespace WpfApp
             _programName = progName;
         }
 
-        public override string SharpCode => $"//Beggining of program { _programName }";
 
         public void SetProgramName(string newName)
         {
             _programName = newName;
         }
-        private string _programName = "unknown";
     }
 
     class PrintNode : CodeNode 
     {
+        public override string SharpCode => $"Console.WriteLine({ _variableName });";
+        private string _variableName = "/*Here should be name of variable*/";
+        public override CodeType Type => CodeType.Print;
+
         public PrintNode()
         {
 
@@ -45,17 +66,19 @@ namespace WpfApp
             _variableName = varName;
         }
 
-        public override string SharpCode => $"Console.WriteLine({ _variableName });";
 
         public void SetVariableName(string newName)
         {
             _variableName = newName;
         }
-        private string _variableName = "/*Here should be name of variable*/";
     }
 
     class InputNode : CodeNode
     {
+        public override string SharpCode => $"{_variableName} = Convert.ToInt32(Console.ReadLine());";
+        private string _variableName = "/*Here should be name of variable*/";
+        public override CodeType Type => CodeType.Input;
+
         public InputNode()
         {
 
@@ -65,16 +88,18 @@ namespace WpfApp
             _variableName = varName;
         }
 
-        public override string SharpCode => $"{_variableName} = Convert.ToInt32(Console.ReadLine());";
         public void SetVariableName(string newName)
         {
             _variableName = newName;
         }
-        private string _variableName = "/*Here should be name of variable*/";
     }
 
     class DeclareNode : CodeNode
     {
+        public override string SharpCode => $"int { _variableName };";
+        private string _variableName = "/*Here should be name of variable*/";
+        public override CodeType Type => CodeType.Declare;
+
         public DeclareNode()
         {
 
@@ -83,18 +108,21 @@ namespace WpfApp
         {
             _variableName = varName;
         }
-        public override string SharpCode => $"int { _variableName };";
 
         public void SetVariableName(string newName)
         {
             _variableName = newName;
         }
 
-        private string _variableName = "/*Here should be name of variable*/";
     }
 
     class AssignNode : CodeNode
     {
+        private string _variableName = "/*Here should be name of variable*/";
+        private int _variableValue = 0;
+        public override string SharpCode => $"{ _variableName } = { _variableValue};";
+        public override CodeType Type => CodeType.Assign;
+
         public AssignNode()
         {
 
@@ -104,30 +132,29 @@ namespace WpfApp
             _variableName = varName;
             _variableValue = varValue;
         }
-
-        public override string SharpCode => $"{ _variableName } = { _variableValue};";
-
         public void SetVariableName(string newName)
         {
             _variableName = newName;
         }
-
         public void SetVariableValue(int newValue)
         {
             _variableValue = newValue;
         }
 
-        private string _variableName = "/*Here should be name of variable*/";
-        private int _variableValue = 0;
     }
 
     class EndNode : CodeNode
     {
+        public override CodeType Type => CodeType.End;
         public override string SharpCode => $"return;";
     }
 
     class CommentNode : CodeNode
     {
+        public override string SharpCode => $"//{ Comment };";
+        public string Comment { get; set; }
+        public override CodeType Type => CodeType.Comment;
+
         public CommentNode()
         {
             Comment = "";
@@ -136,9 +163,48 @@ namespace WpfApp
         {
             Comment = comment;
         }
-        public override string SharpCode => $"//{ Comment };";
-        
-        public string Comment { get; set; }
     }
 
+    class ConditionNode : CodeNode
+    {
+        public string Condition { get; set; }
+        public override CodeType Type => CodeType.Condition;
+
+        public CodeNode TrueNodeSeq { get; set; }
+        public CodeNode FalseNodeSeq { get; set; }
+
+        public ConditionNode()
+        {
+            Condition = "false";
+        }
+        public ConditionNode(string condition)
+        {
+            Condition = condition;
+        }
+
+        private string GetSeqCode(CodeNode begin)
+        {
+            CodeNode curNode = begin;
+            string res = "";
+            while (curNode != null)
+            {
+                res += '\t' + curNode.SharpCode + '\n';
+                curNode = curNode.nextNode;
+            }
+            return res;
+        }
+
+        public override string SharpCode
+        {
+            get
+            {
+                string res = $"if ({Condition})\n{{\n";
+                res += GetSeqCode(TrueNodeSeq);
+                res += "}\nelse\n{\n";
+                res += GetSeqCode(FalseNodeSeq);
+                res += "}";
+                return res;
+            }
+        }
+    }
 }

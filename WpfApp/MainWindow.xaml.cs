@@ -33,8 +33,9 @@ namespace WpfApp
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Input));
-
-
+            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Decision));
+            //Flowchart.AllowInplaceEdit = false;
+            //Flowchart.setAllowInplaceEdit(true);
             if (!System.IO.Directory.Exists(DirPath))
             {
                 System.IO.Directory.CreateDirectory(DirPath);
@@ -91,7 +92,7 @@ namespace WpfApp
             layout.Anchoring = Anchoring.Keep;
             layout.Arrange(Flowchart);
 
-            if (WorkflowAnalyzer.ValidateBlockDiagram(Flowchart))
+            if (WorkflowValidator.ValidateBlockDiagram(Flowchart))
             {
                 OutputLabel.Content = "Good";
             }
