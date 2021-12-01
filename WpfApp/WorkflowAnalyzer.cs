@@ -172,7 +172,7 @@ namespace WpfApp
                         break;
                     case NodeType.Declare:
                         ParseDeclareText(curDiagNode.Text, out tmpString);
-                        curCodeNode.nextNode = new DeclareNode()
+                        curCodeNode.nextNode = new DeclareNode();
                         break;
                     case NodeType.Assign:
                         break;

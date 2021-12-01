@@ -6,25 +6,23 @@
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
         xmlns:diag ="http://mindfusion.eu/diagramming/wpf"
-        Title="KPZ_v1" Height="450" Width="800">
+        Title="KPZ_v1" Height="450" Width="800" Background="White">
     <Grid Margin="170,10,0.453,0.226">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition Width="150"/>
         </Grid.ColumnDefinitions>
-        <diag:Ruler ShowIcon="False">
-            <diag:Diagram x:Name="Flowchart" Margin="0,0,0,0" AllowDrop="True" 
-                          AllowInplaceEdit="True" DataContext="True" VerticalAlignment="Top" HorizontalAlignment="Left" Height="Auto" Width="Auto"/>
+        <diag:Ruler ShowIcon="False" >
+            <diag:Diagram x:Name="Flowchart" Margin="0,0,0,0" AllowDrop="True" AllowInplaceEdit="True" DataContext="Stretch" VerticalAlignment="Top" HorizontalAlignment="Left" Width="Auto" Height="Auto" NodeDoubleClicked="Flowchart_NodeDoubleClicked"/>
         </diag:Ruler>
         <diag:NodeListView x:Name="shapeList" Grid.Column="1"/>
         <ListBox HorizontalAlignment="Left" Height="188" Margin="-159,0,0,0" VerticalAlignment="Top" Width="141" x:Name="DiagramListBox" MouseDoubleClick="Mouse_Double_Click"/>
-        <Button Content="Add diagram" HorizontalAlignment="Left" Margin="-159,229,0,0" VerticalAlignment="Top" Width="141" Height="26" Click="Add_Diagram_Click"/>
-        <Button Content="Remove diagram" HorizontalAlignment="Left" Margin="-159,260,0,0" VerticalAlignment="Top" Width="141" Height="22" Click="Remove_Diagram_Click"/>
-        <Button Content="Generate code" HorizontalAlignment="Left" Margin="-159,287,0,0" VerticalAlignment="Top" Width="141" Height="22" Click="Generate_Code_Click"/>
+        <Button Content="Save diagram" HorizontalAlignment="Left" Margin="-159,229,0,0" VerticalAlignment="Top" Width="141" Height="26" ToolTip="Сохранить диаграмму" Click="Save_Diagram_Click"/>
+        <Button Content="Remove diagram" HorizontalAlignment="Left" Margin="-159,260,0,0" VerticalAlignment="Top" Width="141" Height="22" ToolTip="Убрать из списка" Click="Remove_Diagram_Click"/>
+        <Button Content="Generate code" HorizontalAlignment="Left" Margin="-159,314,0,0" VerticalAlignment="Top" Width="141" Height="22" Click="Generate_Code_Click"/>
         <TextBox x:Name="CurrentFileName" HorizontalAlignment="Left" Height="23" Margin="-159,201,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="141" Text="Default_diag_1" TextAlignment="Center"/>
-        <Label x:Name="OutputLabel" Content="Status" HorizontalAlignment="Left" Margin="-159,362,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.387,0.382" Height="35" Width="141"/>
-        <Button Content="Change directory" HorizontalAlignment="Left" Margin="-159,314,0,0" VerticalAlignment="Top" Width="141" Height="18" ToolTip="Поменять текущую директорию" Click="Change_Dir_Click"/>
-        <Button Content="Load all" HorizontalAlignment="Left" Margin="-159,344,0,0" VerticalAlignment="Top" Width="66" Height="18" ToolTip="Загрузить все файлы из папки" Click="Load_All__Click"/>
-        <Button Content="Select" HorizontalAlignment="Left" Margin="-84,344,0,0" VerticalAlignment="Top" Width="66" Height="18" ToolTip="Выбрать конкретный файл" Click="Select_File__Click"/>
+        <Label x:Name="OutputLabel" Content="Status" HorizontalAlignment="Left" Margin="-159,341,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.387,0.382" Height="57" Width="141" MaxHeight="57" MaxWidth="141"/>
+        <Button Content="Select" HorizontalAlignment="Left" Margin="-86,287,0,0" VerticalAlignment="Top" Width="68" Height="22" ToolTip="Выбрать диаграммы" Click="Select_Files__Click"/>
+        <Button Content="Delete" HorizontalAlignment="Left" Margin="-159,287,0,0" VerticalAlignment="Top" Width="68" Height="22" ToolTip ="Удалить выбранный файл" Click="Delete_File_Click"/>
     </Grid>
 </Window>
