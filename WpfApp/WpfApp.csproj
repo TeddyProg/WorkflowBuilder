@@ -123,6 +123,8 @@
       <DependentUpon>Window1.xaml</DependentUpon>
     </Compile>
     <Compile Include="WorkflowAnalyzer.cs" />
+    <Compile Include="WorkflowUtils.cs" />
+    <Compile Include="WorkflowValidator.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -16,10 +16,10 @@ namespace WpfApp
         Declare,
         Assign,
         Print,
+        Input,
+        Decision,
         Unknown
     }
-
-
 
     class ShapeFactory
     {
@@ -50,7 +50,7 @@ namespace WpfApp
                         Shape = Shapes.RSave,
                         TextFormat = strFormat,
                         Tag = NodeType.Declare,
-                        Text = "varName"
+                        Text = "declare: varName"
                     };
                 case NodeType.Assign:
                     return new ShapeNode
@@ -66,7 +66,7 @@ namespace WpfApp
                         Shape = Shapes.RoundRect,
                         TextFormat = strFormat,
                         Tag = NodeType.Print,
-                        Text = "varName"
+                        Text = "Print: "
                     };
                 case NodeType.End:
                     return new ShapeNode
@@ -75,6 +75,23 @@ namespace WpfApp
                         TextFormat = strFormat,
                         Tag = NodeType.End,
                         Text = "End"
+                    };
+                case NodeType.Input:
+                    return new ShapeNode
+                    {
+                        Shape = Shapes.Input,
+                        TextFormat = strFormat,
+                        Tag = NodeType.Input,
+                        Text = "Input:"
+                    };
+                case NodeType.Decision:
+                    return new ShapeNode
+                    {
+                        Shape = Shapes.Decision,
+                        TextFormat = strFormat,
+                        Tag = NodeType.Decision,
+                        AnchorPattern = AnchorPattern.Decision2In2Out,
+                        Text = "Decision"
                     };
                 case NodeType.Unknown:
                 default:
