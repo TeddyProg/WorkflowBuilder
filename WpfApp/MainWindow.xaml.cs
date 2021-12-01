@@ -1,179 +1,230 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
 using MindFusion.Diagramming.Wpf;
 using System.IO;
 using System.Windows.Forms;
-using MindFusion.Diagramming.Wpf.Layout;
-
 
 namespace WpfApp
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+
         public MainWindow()
         {
             InitializeComponent();
-            //MindFusion.Licensing.LicenseManager.AddLicense()
-            //shapeList.Items.Add(new ShapeNode { Shape = Shapes.RoundRect, Bounds = new Rect(0, 0, 40, 40) });
+            Flowchart.AllowInplaceEdit = false;
+
+            shapeList.Items.Add(new ShapeNode { Shape = Shapes.Rectangle });
             StringFormat strFormat = new StringFormat();
             strFormat.LineAlignment = StringAlignment.Center;
             strFormat.Alignment = StringAlignment.Center;
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Begin));
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.End));
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Assign));
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
-
-
-            if (!System.IO.Directory.Exists(DirPath))
+            shapeList.Items.Add(new ShapeNode
             {
-                System.IO.Directory.CreateDirectory(DirPath);
-            }
-            
+                Shape = Shapes.Terminator,
+                Tag = "Begin",
+                Text = "Begin",
+                TextAlignment = TextAlignment.Center,
+                TextFormat = strFormat,
+
+                ToolTip = "Begin"
+            });
+            shapeList.Items.Add(new ShapeNode
+            {
+                Shape = Shapes.Terminator,
+                Tag = "End",
+                Text = "End",
+                TextAlignment = TextAlignment.Center,
+                TextFormat = strFormat
+            });
+            shapeList.Items.Add(new ShapeNode { Shape = Shapes.RSave });
+            shapeList.Items.Add(new ShapeNode
+            {
+                Tag = "Decision",
+                Shape = Shapes.Decision,
+                AnchorPattern = AnchorPattern.Decision2In2Out
+            });
         }
 
-        string FileName = "";
-        string DirPath = "Diagrams/";
-        List<string> paths = new List<string>();
+        List<string> AllPaths = new List<string>();
+        OpenFileDialog ofd = new OpenFileDialog(); //Для открытия файлов
+        FolderBrowserDialog fbd = new FolderBrowserDialog(); //Для выбора папки
 
-        private void Add_Diagram_Click(object sender, RoutedEventArgs e)
+        private void Save_Diagram_Click(object sender, RoutedEventArgs e)
         {
-            FileName = CurrentFileName.Text.Contains(".xml") ? CurrentFileName.Text : CurrentFileName.Text + ".xml";
-            Flowchart.SaveToXml(DirPath + FileName);
-            if (!DiagramListBox.Items.Contains(FileName))
+            Button_Click_Effect(ref sender);
+            string filename = CurrentFileName.Text.Contains(".xml") ? CurrentFileName.Text : CurrentFileName.Text + ".xml";
+            System.Windows.Forms.DialogResult result = System.Windows.Forms.DialogResult.No;
+            if (DiagramListBox.SelectedItem == null || !DiagramListBox.SelectedItem.ToString().Contains(CurrentFileName.Text)) result = fbd.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK && !DiagramListBox.Items.Contains(filename))
             {
-                OutputLabel.Content = $"Successfully saved as {FileName}.xml";
-                DiagramListBox.Items.Add(FileName);
+                string filepath = fbd.SelectedPath + "\\" + filename;
+                Flowchart.SaveToXml(filepath);
+                Flowchart.ClearAll();
+                AllPaths.Add(filepath);
+                DiagramListBox.Items.Add(Get_File_Name(filename));
+                OutputLabel.Content = "Successfully saved";
             }
-            else OutputLabel.Content = $"{FileName} was successfully edited";
-            Flowchart.ClearAll();
+            else if (DiagramListBox.Items.Contains(filename))
+            {
+                string filepath = "";
+                foreach (string s in AllPaths)
+                {
+                    if (s.Contains(filename)) filepath = s;
+                }
+                if (filepath.Length > 0)
+                {
+                    Flowchart.SaveToXml(filepath);
+                    Flowchart.ClearAll();
+                    CurrentFileName.Text = ".xml";
+                    OutputLabel.Content = "Already in list\nSuccessfully changed";
+                }
+                else { OutputLabel.Content = "Error"; }
+            }
+            else
+            {
+                OutputLabel.Content = "First select path";
+            }
         }
 
         private void Remove_Diagram_Click(object sender, RoutedEventArgs e)
         {
+            Button_Click_Effect(ref sender);
             if (DiagramListBox.SelectedItem != null)
             {
-                FileName = DiagramListBox.SelectedItem.ToString().Contains(".xml") ? DiagramListBox.SelectedItem.ToString() : DiagramListBox.SelectedItem.ToString() + ".xml";
-                File.Delete(DirPath + FileName);
-                DiagramListBox.Items.Remove(FileName);
-                foreach (string s in paths)
+                foreach (string s in AllPaths)
                 {
-                    if (s.Contains(FileName))
+                    if (s.Contains(DiagramListBox.SelectedItem.ToString()))
                     {
-                        File.Delete(s);
-                        paths.Remove(s);
+                        AllPaths.Remove(s);
+                        DiagramListBox.Items.Remove(Get_File_Name(s));
                         break;
                     }
                 }
-                Flowchart.ClearAll();
-            }
-            else
-            {
-                OutputLabel.Content = "First select item";
             }
         }
+
         private void Generate_Code_Click(object sender, RoutedEventArgs e)
-        { 
+        {
+            Button_Click_Effect(ref sender);
             var layout = new MindFusion.Diagramming.Wpf.Layout.DecisionLayout();
             layout.HorizontalPadding = 40;
             layout.VerticalPadding = 40;
             layout.StartNode = Flowchart.FindNode("Begin");
-            layout.Anchoring = Anchoring.Keep;
             layout.Arrange(Flowchart);
-
-            if (WorkflowAnalyzer.ValidateBlockDiagram(Flowchart))
-            {
-                OutputLabel.Content = "Good";
-            }
-            else
-                OutputLabel.Content = "Hui";
-
-            //var node = Flowchart.FindNode("Decision");
-            //if (node != null)
-            //{
-            //    var links = node.GetAllOutgoingLinks();
-            //    for (int i = 0; i < links.Count; ++i)
-            //    {
-            //        var link = links[i];
-            //        int ind = link.OriginIndex;
-            //        var anchorPos = link.OriginConnection.GetAnchorPos(ind);
-            //        var type = anchorPos.GetType();
-            //        //node.GetAnchorPos(i).GetType();
-            //    }
-            //    node.GetAllLinks();
-            //}
-            //int index = Flowchart.Links[0].OriginIndex;
-            //Flowchart.Links[0].OriginConnection.GetAnchorPos(index).GetType();
         }
 
         private void Mouse_Double_Click(object sender, RoutedEventArgs e)
         {
             if (DiagramListBox.SelectedItem != null)
             {
-                string filepath = "";
-                bool isinList = false;
-                FileName = DiagramListBox.SelectedItem.ToString().Contains(".xml") ? DiagramListBox.SelectedItem.ToString() : DiagramListBox.SelectedItem.ToString() + ".xml";
-                foreach (string s in paths)
+                CurrentFileName.Text = DiagramListBox.SelectedItem.ToString();
+                foreach (string s in AllPaths)
                 {
-                    if (s.Contains(FileName))
+                    if (s.Contains(DiagramListBox.SelectedItem.ToString()))
                     {
-                        isinList = true;
-                        filepath = s;
-                        break;
+                        Flowchart.ClearAll();
+                        Flowchart.LoadFromXml(s);
                     }
                 }
-                if (!isinList)
-                {
-                    Flowchart.LoadFromXml(FileName);
-                    CurrentFileName.Text = FileName;
-                }
-                else
-                {
-                    Flowchart.LoadFromXml(filepath);
-                }
             }
-        }
-
-        private void Change_Dir_Click(object sender, RoutedEventArgs e)
-        {
-            Get_Dir_Path();
-        }
-
-        private void Load_All__Click(object sender, RoutedEventArgs e)
-        {
-            string[] files = { };
-            if (DirPath != "") files = Directory.GetFiles(DirPath);
-            else OutputLabel.Content = "Error";
-            DiagramListBox.Items.Clear();
-            foreach (string f in files)
+            else
             {
-                if (f.Contains(".xml"))
+                Flowchart.ClearAll();
+                CurrentFileName.Clear();
+            }
+        }
+
+        private void Select_Files__Click(object sender, RoutedEventArgs e)
+        {
+            Button_Click_Effect(ref sender);
+            ofd.Multiselect = true;
+            ofd.Filter = "XML Files (*.xml)|*.xml";
+            ofd.FilterIndex = 0;
+            ofd.ShowDialog();
+            foreach (string s in ofd.FileNames)
+            {
+                string filename = Get_File_Name(s);
+                if (!DiagramListBox.Items.Contains(filename))
                 {
-                    string line = "";
-                    for (int i = 0; i < f.Length; i++)
-                    {
-                        if (f[i] == '\\')
-                        {
-                            line = "";
-                            continue;
-                        }
-                        line += f[i];
-                    }
-                    DiagramListBox.Items.Add(line);
+                    DiagramListBox.Items.Add(filename);
+                    AllPaths.Add(s);
                 }
             }
         }
 
-        private void Select_File__Click(object sender, RoutedEventArgs e)
+        private void Delete_File_Click(object sender, RoutedEventArgs e)
         {
-            string filepath = Get_File_Path();
-            if (!paths.Contains(filepath)) paths.Add(filepath);
+            Button_Click_Effect(ref sender);
+            foreach (string s in AllPaths)
+            {
+                if (s.Contains(DiagramListBox.SelectedItem.ToString()))
+                {
+                    File.Delete(s);
+                    DiagramListBox.Items.Remove(DiagramListBox.SelectedItem.ToString());
+                    AllPaths.Remove(s);
+                    OutputLabel.Content = "Deleted";
+                    break;
+                }
+            }
+        }
+
+        bool isDecisionOpened = false;
+
+        private void Flowchart_NodeDoubleClicked(object sender, NodeEventArgs e)
+        {
+
+            String_Nodes_Methods_Container snmc = new String_Nodes_Methods_Container();
+            switch (e.Node.Tag)
+            {
+                case "Decision":
+                    if (isDecisionOpened == false)
+                    {
+                        Window1 w = new Window1(new String_Nodes_Methods_Container().Get_Elements_For_Decision(e.Node.Text));
+                        isDecisionOpened = true;
+                        w.Reg_Decision_Del(set_node_string);
+                        w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                        w.Topmost = true;
+                        //w.Activate();
+                        w.Show();
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            void set_node_string(string input)
+            {
+                //System.Windows.MessageBox.Show(input);
+                isDecisionOpened = false;
+                e.Node.Text = input;
+            }
+        }
+
+        private static void Button_Click_Effect(ref object sender) //Баловался с эффектом при нажатии, еще не разобрался
+        {
+            System.Windows.Controls.Button button = sender as System.Windows.Controls.Button;
+            //button.Effect = new System.Windows.Media.Effects.DropShadowEffect()
+            //{
+
+            //};
+        }
+
+        private string Get_File_Name(string path) //Выделяет имя файла из строки пути к файлу
+        {
             string filename = "";
-            foreach (char c in filepath)
+            foreach (char c in path)
             {
                 if (c == '\\')
                 {
@@ -182,42 +233,7 @@ namespace WpfApp
                 }
                 filename += c;
             }
-            if (!DiagramListBox.Items.Contains(filename))
-            {
-                DiagramListBox.Items.Add(filename);
-                Flowchart.LoadFromXml(filepath);
-            }
-            else
-            {
-                OutputLabel.Content = "Already in list";
-            }
-        }
-
-        private string Get_File_Path()
-        {
-            System.Windows.Forms.OpenFileDialog openFileDlg = new System.Windows.Forms.OpenFileDialog();
-            var result = openFileDlg.ShowDialog();
-            //System.Windows.MessageBox.Show(openFileDlg.FileName);
-            if (result.ToString() != string.Empty && openFileDlg.FileName.Contains(".xml"))
-            {
-                return openFileDlg.FileName;
-            }
-            else;
-            {
-                return "None";
-                OutputLabel.Content = "Error";
-            }
-        }
-
-        private void Get_Dir_Path()
-        {
-            System.Windows.Forms.FolderBrowserDialog openFileDlg = new System.Windows.Forms.FolderBrowserDialog();
-            var result = openFileDlg.ShowDialog();
-            if (result.ToString() != string.Empty)
-            {
-                DirPath = openFileDlg.SelectedPath + "\\";
-            }
-            if (DirPath == "\\") DirPath = "";
+            return filename;
         }
     }
 }
