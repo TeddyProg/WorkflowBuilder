@@ -26,7 +26,7 @@ namespace WpfApp
             InitializeComponent();
             Flowchart.AllowInplaceEdit = false;
 
-            shapeList.Items.Add(new ShapeNode { Shape = Shapes.Rectangle });
+            //shapeList.Items.Add(new ShapeNode { Shape = Shapes.Rectangle });
             StringFormat strFormat = new StringFormat();
             strFormat.LineAlignment = StringAlignment.Center;
             strFormat.Alignment = StringAlignment.Center;
@@ -39,14 +39,14 @@ namespace WpfApp
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Decision));
             //Flowchart.AllowInplaceEdit = false;
             //Flowchart.setAllowInplaceEdit(true);
-            if (!System.IO.Directory.Exists(DirPath))
-            {
-                System.IO.Directory.CreateDirectory(DirPath);
-            }
-            if (!System.IO.Directory.Exists(programsPath))
-            {
-                System.IO.Directory.CreateDirectory(programsPath);
-            }
+            //if (!System.IO.Directory.Exists(DirPath))
+            //{
+            //    System.IO.Directory.CreateDirectory(DirPath);
+            //}
+            //if (!System.IO.Directory.Exists(programsPath))
+            //{
+            //    System.IO.Directory.CreateDirectory(programsPath);
+            //}
             
         }
         List<string> AllPaths = new List<string>();
@@ -114,7 +114,8 @@ namespace WpfApp
             var layout = new MindFusion.Diagramming.Wpf.Layout.DecisionLayout();
             layout.HorizontalPadding = 40;
             layout.VerticalPadding = 40;
-            layout.StartNode = Flowchart.FindNode("Begin");
+            layout.StartNode = Flowchart.FindNode(NodeType.Begin);
+            layout.Anchoring = Anchoring.Keep;
             layout.Arrange(Flowchart);
 
             if (WorkflowValidator.ValidateBlockDiagram(Flowchart))
@@ -124,9 +125,10 @@ namespace WpfApp
             else
                 OutputLabel.Content = "Bad";
 
-            string code = WorkflowAnalyzer.MakeProgram(Flowchart, FileName + "_program");
-            FileName = FileName.Replace('\\', '_').Replace('/', '_');
-            string path = $"{programsPath}/{FileName}.txt";
+            string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
+            //FileName = FileName.Replace('\\', '_').Replace('/', '_');
+            fbd.ShowDialog();
+            string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
 
             // The line below will create a text file, my_file.txt, in 
             // the Text_Files folder in D:\ drive.
@@ -136,22 +138,15 @@ namespace WpfApp
                 sw.Write(code);
             }
 
-            //var node = Flowchart.FindNode("Decision");
-            //if (node != null)
-            //{
-            //    var links = node.GetAllOutgoingLinks();
-            //    for (int i = 0; i < links.Count; ++i)
-            //    {
-            //        var link = links[i];
-            //        int ind = link.OriginIndex;
-            //        var anchorPos = link.OriginConnection.GetAnchorPos(ind);
-            //        var type = anchorPos.GetType();
-            //        //node.GetAnchorPos(i).GetType();
-            //    }
-            //    node.GetAllLinks();
-            //}
-            //int index = Flowchart.Links[0].OriginIndex;
-            //Flowchart.Links[0].OriginConnection.GetAnchorPos(index).GetType();
+            var links = Flowchart.Links;
+            List<int> inds = new List<int>();
+            foreach(var link in links)
+            {
+                inds.Add(link.OriginIndex);
+                inds.Add(link.DestinationIndex);
+
+            }
+            int a = 0;
         }
 
         private void Mouse_Double_Click(object sender, RoutedEventArgs e)
@@ -215,9 +210,10 @@ namespace WpfApp
         {
 
             String_Nodes_Methods_Container snmc = new String_Nodes_Methods_Container();
-            switch (e.Node.Tag)
+            NodeType type = WorkflowUtils.GetNodeTypeFromTag(e.Node.Tag);
+            switch (type)
             {
-                case "Decision":
+                case NodeType.Decision:
                     if (isDecisionOpened == false)
                     {
                         Window1 w = new Window1(new String_Nodes_Methods_Container().Get_Elements_For_Decision(e.Node.Text));

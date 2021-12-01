@@ -21,8 +21,6 @@ namespace WpfApp
         Unknown
     }
 
-
-
     class ShapeFactory
     {
         private static ShapeNode CreateNode(Shapes s, string tag, string text, TextAlignment txtAl, StringFormat strFormat)

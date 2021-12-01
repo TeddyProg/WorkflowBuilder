@@ -179,7 +179,7 @@ namespace WpfApp
                             for (int i = 0; i < links.Count; ++i)
                             {
                                 var link = links[i];
-                                int ind = link.OriginIndex; // 3 - false, 2 - true
+                                int ind = link.OriginAnchor; // 3 - false, 2 - true
                                 inds.Add(ind);
                                 if (ind == 2) // true sequence
                                 {
