@@ -194,6 +194,11 @@ namespace WpfApp
                     ConditionNode condNode = curNode as ConditionNode;
                     condNode.Prefix = '\t' + Prefix;
                 }
+                else if (curNode.Type == CodeType.Cycle)
+                {
+                    CycleNode cycNode = curNode as CycleNode;
+                    cycNode.Prefix = '\t' + Prefix;
+                }
                 res += '\t' + Prefix + curNode.SharpCode + '\n';
                 curNode = curNode.nextNode;
             }
@@ -218,4 +223,58 @@ namespace WpfApp
             }
         }
     }
+
+    class CycleNode : CodeNode
+    {
+        public string Condition { get; set; }
+        public override CodeType Type => CodeType.Cycle;
+        public string Prefix { get; set; }
+
+        public CodeNode CycleBody { get; set; }
+
+        public CycleNode()
+        {
+            Condition = "false";
+        }
+        public CycleNode(string condition)
+        {
+            Condition = condition;
+        }
+
+        private string GetSeqCode(CodeNode begin)
+        {
+            CodeNode curNode = begin;
+            string res = "";
+            while (curNode != null)
+            {
+                if (curNode.Type == CodeType.Condition)
+                {
+                    ConditionNode condNode = curNode as ConditionNode;
+                    condNode.Prefix = '\t' + Prefix;
+                }
+                else if (curNode.Type == CodeType.Cycle)
+                {
+                    CycleNode cycNode = curNode as CycleNode;
+                    cycNode.Prefix = '\t' + Prefix;
+                }
+                res += '\t' + Prefix + curNode.SharpCode + '\n';
+                curNode = curNode.nextNode;
+            }
+            return res;
+        }
+
+        public override string SharpCode
+        {
+            get
+            {
+                string res =
+                    $"while ({Condition})\n" +
+                    $"{Prefix}{{\n";
+                res += GetSeqCode(CycleBody);
+                res += $"{Prefix}}}";
+                return res;
+            }
+        }
+    }
+
 }
