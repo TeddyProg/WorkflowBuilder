@@ -37,17 +37,7 @@ namespace WpfApp
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Input));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Decision));
-            //Flowchart.AllowInplaceEdit = false;
-            //Flowchart.setAllowInplaceEdit(true);
-            //if (!System.IO.Directory.Exists(DirPath))
-            //{
-            //    System.IO.Directory.CreateDirectory(DirPath);
-            //}
-            //if (!System.IO.Directory.Exists(programsPath))
-            //{
-            //    System.IO.Directory.CreateDirectory(programsPath);
-            //}
-            
+
         }
         List<string> AllPaths = new List<string>();
         OpenFileDialog ofd = new OpenFileDialog(); //Для открытия файлов
@@ -125,7 +115,12 @@ namespace WpfApp
             else
                 OutputLabel.Content = "Bad";
 
-            string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
+            //string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
+            List<Diagram> diags = new List<Diagram>()
+            {
+                Flowchart
+            };
+            string code = WorkflowAnalyzer.MakeProgram(diags);
             //FileName = FileName.Replace('\\', '_').Replace('/', '_');
             fbd.ShowDialog();
             string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
@@ -140,7 +135,7 @@ namespace WpfApp
 
             var links = Flowchart.Links;
             List<int> inds = new List<int>();
-            foreach(var link in links)
+            foreach (var link in links)
             {
                 inds.Add(link.OriginIndex);
                 inds.Add(link.DestinationIndex);
@@ -216,24 +211,60 @@ namespace WpfApp
                 case NodeType.Decision:
                     if (isDecisionOpened == false)
                     {
-                        Window1 w = new Window1(new String_Nodes_Methods_Container().Get_Elements_For_Decision(e.Node.Text));
-                        isDecisionOpened = true;
+                        DecisionWindow w = new DecisionWindow(new String_Nodes_Methods_Container().Get_Elements_For_Decision(e.Node.Text));
                         w.Reg_Decision_Del(set_node_string);
-                        w.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                        w.Topmost = true;
-                        //w.Activate();
-                        w.Show();
+                        common_case_parameters((Window)w);
+                    }
+                    break;
+                case NodeType.Input:
+                    if (isDecisionOpened == false)
+                    {
+                        InOutWindow iow = new InOutWindow("Input: ", new String_Nodes_Methods_Container().Verifying_Declare_InOut_Format(e.Node.Text));
+                        iow.Reg_InOut_Del(set_node_string);
+                        common_case_parameters((Window)iow);
+                    }
+                    break;
+                case NodeType.Print:
+                    if (isDecisionOpened == false)
+                    {
+                        InOutWindow iow = new InOutWindow("Print: ", new String_Nodes_Methods_Container().Verifying_Declare_InOut_Format(e.Node.Text));
+                        iow.Reg_InOut_Del(set_node_string);
+                        common_case_parameters((Window)iow);
+                    }
+                    break;
+                case NodeType.Declare:
+                    if (isDecisionOpened==false)
+                    {
+                        InOutWindow iow = new InOutWindow("Declare: ", new String_Nodes_Methods_Container().Verifying_Declare_InOut_Format(e.Node.Text));
+                        iow.Reg_InOut_Del(set_node_string);
+                        common_case_parameters((Window)iow);
+                    }
+                    break;
+                case NodeType.Assign:
+                    if (isDecisionOpened == false)
+                    {
+                        AssignWindow aw = new AssignWindow(e.Node.Text);
+                        aw.Reg_Assign_Del(set_node_string);
+                        common_case_parameters((Window)aw);
                     }
                     break;
                 default:
+                    System.Windows.MessageBox.Show("Undefined node!");
                     break;
             }
 
             void set_node_string(string input)
             {
-                //System.Windows.MessageBox.Show(input);
                 isDecisionOpened = false;
                 e.Node.Text = input;
+            }
+
+            void common_case_parameters(Window window)
+            {
+                isDecisionOpened = true;
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Topmost = true;
+                window.Show();
             }
         }
 

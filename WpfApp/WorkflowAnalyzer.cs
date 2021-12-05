@@ -37,17 +37,17 @@ namespace WpfApp
             return true;
         }
 
-        private static bool ParseAssignText(string assgnNodeText, out string varName, out int varValue)
+        private static bool ParseAssignText(string assgnNodeText, out string varName, out string varValue)
         {
             var args = assgnNodeText.Split(' ');
-            varValue = -1;
+            varValue = "/*incorrect variable value*/";
             varName = "/*incorrect variable name*/";
             if (args.Length != 3)
                 return false;
             if (args[1] != "=")
                 return false;
             varName = args[0];
-            varValue = Convert.ToInt32(args[2]);
+            varValue = args[2];
             return true;
         }
 
@@ -69,14 +69,19 @@ namespace WpfApp
             return true;
         }
 
-        private static string MakeTextFromCodeNodes(CodeNode startNode)
+        private static string MakeTextFromCodeNodes(CodeNode startNode, string prefix = "")
         {
             string res = "";
 
             var curNode = startNode;
             while(curNode != null)
             {
-                res += curNode.SharpCode + '\n';
+                if (curNode.Type == CodeType.Condition)
+                {
+                    var condNode = curNode as ConditionNode;
+                    condNode.Prefix = prefix;
+                }
+                res += prefix + curNode.SharpCode + '\n';
                 curNode = curNode.nextNode;
             }
 
@@ -105,7 +110,7 @@ namespace WpfApp
                 case NodeType.Assign:
                     {
                         string assignVar;
-                        int varValue;
+                        string varValue;
                         ParseAssignText(dNode.Text, out assignVar, out varValue);
                         resNode = new AssignNode(assignVar, varValue);
                         break;
@@ -210,7 +215,7 @@ namespace WpfApp
             return resNode;
         }
 
-        public static string MakeProgram(Diagram diag, string progName = "program")
+        public static string MakeProgram(Diagram diag, string progName = "program", string prefix = "")
         {
             if (!WorkflowValidator.ValidateBlockDiagram(diag))
             {
@@ -218,59 +223,139 @@ namespace WpfApp
             }
 
             CodeNode startNode = MakeCodeSequence(diag.FindNode(NodeType.Begin));
-            //startNode.SetProgramName(progName);
-            
-            //var curDiagNode = diag.FindNode(NodeType.Begin);
-            //curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //CodeNode curCodeNode = startNode;
-            //string tmpString;
-            //int tmpVal;
-            //while (curDiagNode != null)
-            //{
-            //    NodeType type = GetNodeTypeFromTag(curDiagNode.Tag);
-            //    switch (type)
-            //    {
-            //        // it means that diagram is wrong, should show it some way
-            //        case NodeType.Begin:
-            //            curCodeNode.nextNode = new CommentNode("Unexpected begin node");
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //        case NodeType.End:
-            //            curCodeNode.nextNode = new EndNode();
-            //            curDiagNode = null;
-            //            break;
-            //        case NodeType.Declare:
-            //            ParseDeclareText(curDiagNode.Text, out tmpString);
-            //            curCodeNode.nextNode = new DeclareNode(tmpString);
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //        case NodeType.Assign:
-            //            ParseAssignText(curDiagNode.Text, out tmpString, out tmpVal);
-            //            curCodeNode.nextNode = new AssignNode(tmpString, tmpVal);
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //        case NodeType.Print:
-            //            ParsePrintText(curDiagNode.Text, out tmpString);
-            //            curCodeNode.nextNode = new PrintNode(tmpString);
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //        case NodeType.Input:
-            //            ParseInputText(curDiagNode.Text, out tmpString);
-            //            curCodeNode.nextNode = new InputNode(tmpString);
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //        case NodeType.Unknown:
-            //        default:
-            //            curCodeNode.nextNode = new CommentNode("Unknown node");
-            //            curDiagNode = curDiagNode.OutgoingLinks[0].Destination; // going to next node
-            //            break;
-            //    }
-            //    curCodeNode = curCodeNode.nextNode;
-            //}
 
-            string res = MakeTextFromCodeNodes(startNode);
+            string res = MakeTextFromCodeNodes(startNode, prefix);
 
             return res;
         }
+
+        private static HashSet<string> GetVariablesFromDiagram(Diagram d)
+        {
+            HashSet<string> result = new HashSet<string>();
+            var nodes = d.Nodes;
+
+            bool IsNum(string v) 
+            {
+                return int.TryParse(v, out _);
+            }
+
+            foreach (var node in nodes)
+            {
+                var type = WorkflowUtils.GetNodeTypeFromTag(node.Tag);
+                switch (type)
+                {
+                    case NodeType.Declare:
+                        {
+                            string varName;
+                            ParseDeclareText(node.Text, out varName);
+                            result.Add(varName);
+                            break;
+                        }
+                    case NodeType.Assign:
+                        {
+                            string varName;
+                            string varValue;
+                            
+                            ParseAssignText(node.Text, out varName, out varValue);
+                            result.Add(varName);
+                            if (!IsNum(varValue))
+                            {
+                                result.Add(varValue);
+                            }
+                            break;
+                        }
+                    case NodeType.Print:
+                        {
+                            string varName;
+
+                            ParsePrintText(node.Text, out varName);
+                            if (!IsNum(varName))
+                            {
+                                result.Add(varName);
+                            }
+                            break;
+                        }
+                    case NodeType.Input:
+                        {
+                            string varName;
+                            ParseInputText(node.Text, out varName);
+                            result.Add(varName);
+                            break;
+                        }
+                    case NodeType.Decision:
+                        {
+                            string condText;
+                            ParseDecisionText(node.Text, out condText);
+                            var arghs = condText.Split(' ');
+                            result.Add(arghs[0]);
+                            if (!IsNum(arghs[2]) )
+                            {
+                                result.Add(arghs[2]);
+                            }
+                            break;
+                        }
+                    default:
+                        continue;
+                }
+            }
+            return result;
+        }
+
+        public static string MakeProgram(List<Diagram> diags)
+        {
+
+            string res = header;
+
+            HashSet<string> variables = new HashSet<string>();
+            foreach (var d in diags)
+            {
+                var newVars = GetVariablesFromDiagram(d);
+                variables.UnionWith(newVars);
+            }
+
+            foreach(string var in variables)
+            {
+                res += "\t\tprivate static volatile int V;\n";
+            }
+
+            res +=
+            "\t\tstatic void Main(string[] args)\n" +
+            "\t\t{\n" +
+            "\n" +
+            "\t\t\tTask[] tasks = {\n";
+
+            foreach (var d in diags)
+            {
+                res += MakeProgram(d, "program", "\t\t\t\t");
+            }
+
+            res += footer;
+            return res;
+        }
+
+        static string header =
+            "using System;\n" +
+            "using System.Threading.Tasks;\n" +
+            "\n" +
+            "namespace Work\n" +
+            "{\n" +
+            "\tclass Program\n" +
+            "\t{\n";
+
+        static string footer = 
+            "\t\t\t};\n" + 
+            "\n" +
+            "\t\t\tfor(int i = 0; i < tasks.Length; ++i)\n" +
+            "\t\t\t{\n" + 
+            "\t\t\t\ttasks[i].Start();\n" + 
+            "\t\t\t}\n" + 
+            "\n" + 
+            "\t\t\tTask.WaitAll(tasks);\n" + 
+            "\n" + 
+            "\t\t}\n" + 
+            "\t}\n" +
+            "}\n";
+
+
     }
 }

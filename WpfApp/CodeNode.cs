@@ -119,7 +119,7 @@ namespace WpfApp
     class AssignNode : CodeNode
     {
         private string _variableName = "/*Here should be name of variable*/";
-        private int _variableValue = 0;
+        private string _variableValue = "/*Here should be value of variable*/";
         public override string SharpCode => $"{ _variableName } = { _variableValue};";
         public override CodeType Type => CodeType.Assign;
 
@@ -127,7 +127,7 @@ namespace WpfApp
         {
 
         }
-        public AssignNode(string varName, int varValue)
+        public AssignNode(string varName, string varValue)
         {
             _variableName = varName;
             _variableValue = varValue;
@@ -136,7 +136,7 @@ namespace WpfApp
         {
             _variableName = newName;
         }
-        public void SetVariableValue(int newValue)
+        public void SetVariableValue(string newValue)
         {
             _variableValue = newValue;
         }
@@ -169,6 +169,7 @@ namespace WpfApp
     {
         public string Condition { get; set; }
         public override CodeType Type => CodeType.Condition;
+        public string Prefix { get; set; }
 
         public CodeNode TrueNodeSeq { get; set; }
         public CodeNode FalseNodeSeq { get; set; }
@@ -188,7 +189,12 @@ namespace WpfApp
             string res = "";
             while (curNode != null)
             {
-                res += '\t' + curNode.SharpCode + '\n';
+                if (curNode.Type == CodeType.Condition)
+                {
+                    ConditionNode condNode = curNode as ConditionNode;
+                    condNode.Prefix = '\t' + Prefix;
+                }
+                res += '\t' + Prefix + curNode.SharpCode + '\n';
                 curNode = curNode.nextNode;
             }
             return res;
@@ -198,11 +204,16 @@ namespace WpfApp
         {
             get
             {
-                string res = $"if ({Condition})\n{{\n";
+                string res = 
+                    $"if ({Condition})\n" +
+                    $"{Prefix}{{\n";
                 res += GetSeqCode(TrueNodeSeq);
-                res += "}\nelse\n{\n";
+                res += 
+                    $"{Prefix}}}\n" +
+                    $"{Prefix}else\n" +
+                    $"{Prefix}{{\n";
                 res += GetSeqCode(FalseNodeSeq);
-                res += "}";
+                res += $"{Prefix}}}";
                 return res;
             }
         }

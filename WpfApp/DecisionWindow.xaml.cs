@@ -17,11 +17,11 @@ namespace WpfApp
     /// <summary>
     /// Логика взаимодействия для Window1.xaml
     /// </summary>
-    public partial class Window1 : Window
+    public partial class DecisionWindow : Window
     {
         public delegate void decision(string currentString);
         decision dec;
-        public Window1(string[] input)
+        public DecisionWindow(string[] input)
         {
             InitializeComponent();
             sign.Items.Add("<=");
@@ -50,7 +50,8 @@ namespace WpfApp
 
         private void Ok_Button_Click(object sender, RoutedEventArgs e)
         {
-            dec?.Invoke((leftNum.Text.Length <= 0 ? "0" : leftNum.Text) + (sign.SelectedItem == null ? "==" : sign.SelectedItem.ToString()) + (rightNum.Text.Length <= 0 ? "0" : rightNum.Text));
+            string[] output = new String_Nodes_Methods_Container().Get_Elements_For_Decision(leftNum.Text+sign.Text+rightNum.Text);
+            dec?.Invoke(output[0]+output[1]+output[2]);
             this.Close();
         }
     }
