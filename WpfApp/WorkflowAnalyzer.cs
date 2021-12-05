@@ -81,6 +81,11 @@ namespace WpfApp
                     var condNode = curNode as ConditionNode;
                     condNode.Prefix = prefix;
                 }
+                else if (curNode.Type == CodeType.Cycle)
+                {
+                    var cycNode = curNode as CycleNode;
+                    cycNode.Prefix = prefix;
+                }
                 res += prefix + curNode.SharpCode + '\n';
                 curNode = curNode.nextNode;
             }
@@ -104,6 +109,7 @@ namespace WpfApp
                     {
                         string decVar;
                         ParseDeclareText(dNode.Text, out decVar);
+                        
                         resNode = new DeclareNode(decVar);
                         break;
                     }
@@ -134,7 +140,14 @@ namespace WpfApp
                     {
                         string cond;
                         ParseDecisionText(dNode.Text, out cond);
-                        resNode = new ConditionNode(cond);
+                        if (dNode.GetAllIncomingLinks().Count > 1) // It`s cycle
+                        {
+                            resNode = new CycleNode(cond);
+                        }
+                        else
+                        {
+                            resNode = new ConditionNode(cond);
+                        }
                         break;
                     }
                 case NodeType.Unknown:
@@ -154,38 +167,54 @@ namespace WpfApp
                 switch (curCodeNode.Type)
                 {
                     case CodeType.Begin:
+                    case CodeType.Print:
+                    case CodeType.Declare:
+                    case CodeType.Input:
+                    case CodeType.Assign:
+                    case CodeType.Comment:
                         dNode = dNode.OutgoingLinks[0].Destination;
                         curCodeNode.nextNode = GetCodeNode(dNode);
                         break;
                     case CodeType.End:
                         dNode = null;
                         break;
-                    case CodeType.Print:
-                        dNode = dNode.OutgoingLinks[0].Destination;
-                        curCodeNode.nextNode = GetCodeNode(dNode);
-                        break;
-                    case CodeType.Declare:
-                        dNode = dNode.OutgoingLinks[0].Destination;
-                        curCodeNode.nextNode = GetCodeNode(dNode);
-                        break;
-                    case CodeType.Input:
-                        dNode = dNode.OutgoingLinks[0].Destination;
-                        curCodeNode.nextNode = GetCodeNode(dNode);
-                        break;
                     case CodeType.Cycle:
-                        //TODO
-                        break;
-                    case CodeType.Condition:
                         {
-                            ConditionNode condNode = curCodeNode as ConditionNode;
+                            CycleNode cycNode = curCodeNode as CycleNode;
                             var links = dNode.GetAllOutgoingLinks();
-                            List<int> inds = new List<int>();
+                            DiagramLink nextLink = null;
                             // TODO: Check if it`s only 1 outgoing link for each variant in condition
                             for (int i = 0; i < links.Count; ++i)
                             {
                                 var link = links[i];
                                 int ind = link.OriginAnchor; // 3 - false, 2 - true
-                                inds.Add(ind);
+                                bool isCon = ReferenceEquals(dNode, link.Destination);
+                                if (isCon)
+                                {
+
+                                    if (ind == 3)
+                                    {
+                                        cycNode.Condition = "!(" + cycNode.Condition + ")";
+                                    }
+                                }
+                                else
+                                {
+                                    nextLink = link;
+                                }
+                            }
+                            curCodeNode.nextNode = GetCodeNode(nextLink.Destination);
+                            dNode = nextLink.Destination;
+                            break;
+                        }
+                    case CodeType.Condition:
+                        {
+                            ConditionNode condNode = curCodeNode as ConditionNode;
+                            var links = dNode.GetAllOutgoingLinks();
+                            // TODO: Check if it`s only 1 outgoing link for each variant in condition
+                            for (int i = 0; i < links.Count; ++i)
+                            {
+                                var link = links[i];
+                                int ind = link.OriginAnchor; // 3 - false, 2 - true
                                 if (ind == 2) // true sequence
                                 {
                                     condNode.TrueNodeSeq = MakeCodeSequence(link.Destination);
@@ -198,14 +227,7 @@ namespace WpfApp
                             dNode = null;
                             break;
                         }
-                    case CodeType.Assign:
-                        dNode = dNode.OutgoingLinks[0].Destination;
-                        curCodeNode.nextNode = GetCodeNode(dNode);
-                        break;
-                    case CodeType.Comment:
-                        dNode = dNode.OutgoingLinks[0].Destination;
-                        curCodeNode.nextNode = GetCodeNode(dNode);
-                        break;
+                    
                     case CodeType.Unknown:
                     default:
                         return null;

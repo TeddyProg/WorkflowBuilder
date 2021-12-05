@@ -31,8 +31,8 @@ namespace WpfApp
             sign.Items.Add(">");
             if (input != null)
             {
-                leftNum.Text = input[0];
-                rightNum.Text = input[2];
+                leftNum.Text = input[0].Replace(" ", "");
+                rightNum.Text = input[2].Replace(" ", "");
                 sign.Text = input[1];
             }
             else
@@ -50,8 +50,8 @@ namespace WpfApp
 
         private void Ok_Button_Click(object sender, RoutedEventArgs e)
         {
-            string[] output = new String_Nodes_Methods_Container().Get_Elements_For_Decision(leftNum.Text+sign.Text+rightNum.Text);
-            dec?.Invoke(output[0]+output[1]+output[2]);
+            string[] output = new String_Nodes_Methods_Container().Get_Elements_For_Decision(leftNum.Text + sign.Text + rightNum.Text);
+            dec?.Invoke(output[0] + " " + output[1] + " " + output[2]);
             this.Close();
         }
     }
