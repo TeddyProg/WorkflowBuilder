@@ -42,8 +42,7 @@ namespace WpfApp
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            if (new String_Nodes_Methods_Container().Verifying_Declare_InOut_Format(TypeLabel.Content + ContentBox.Text) != "") InOut?.Invoke(TypeLabel.Content + ContentBox.Text);
-            else InOut?.Invoke(TypeLabel.Content+lastField);
+            InOut?.Invoke(TypeLabel.Content + lastField);
             this.Close();
         }
 

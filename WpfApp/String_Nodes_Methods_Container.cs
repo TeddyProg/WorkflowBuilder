@@ -23,9 +23,9 @@ namespace WpfApp
                 a_sign_b[2] = "";
                 foreach (char c in input)
                 {
-                    if (!letters.Contains(c) && !symbols.Contains(c) && !numbers.Contains(c))
+                    if (!(letters.Contains(c) || letters.Contains(c.ToString().ToLower())) && !(symbols.Contains(c) || symbols.Contains(c.ToString().ToLower())) && !(numbers.Contains(c) || numbers.Contains(c.ToString().ToLower())))
                     {
-                        if (input!="Decision") MessageBox.Show("Wrong format!");
+                        if (input != "Decision") MessageBox.Show("Wrong format!");
                         return new string[] { "0", "==", "0" };
                     }
                 }
@@ -37,7 +37,9 @@ namespace WpfApp
                     if (isAfterSymbol && symbols.Contains(c)) a_sign_b[1] += c;
                     if (isAfterSymbol && !symbols.Contains(c)) a_sign_b[2] += c;
                 }
-                return a_sign_b;
+                if (a_sign_b[2].Length > 0 && a_sign_b[0].Length > 0) return a_sign_b;
+                else if (a_sign_b[0] == "Decision") return new string[] { "0", "==", "0" };
+                else return new string[] { "", "", "" };
             }
             else
             {
@@ -94,6 +96,11 @@ namespace WpfApp
         public string Verifying_Assign_Fromat(string input)
         {
             string[] splitted = input.Split(' ');
+            if (splitted.Length > 3)
+            {
+                MessageBox.Show("Incorrect variable name");
+                return "";
+            }
             if (input.Length > 0)
             {
                 if (splitted[0].Contains(' ') || splitted[2].Contains(' '))
@@ -107,27 +114,6 @@ namespace WpfApp
                     else { MessageBox.Show("Incorrect variable name"); return ""; };
                 }
             }
-            //for (int i = 0; i < splitted.Length-1; i++)
-            //{
-            //    for (int j = 0; j < splitted[i].Length; j++)
-            //    {
-            //        if (i == 0 && !isInList(splitted[i][j], letters))
-            //        {
-            //            MessageBox.Show("First field content must be variable name");
-            //            return "";
-            //        }
-            //    }
-
-            //    for (int k = 0; k < splitted.Length; k++)
-            //    {
-            //        while (splitted[k].Contains(' '))
-            //        {
-            //            string a = splitted[k].Replace(" ", "");
-            //            splitted[k] = a;
-            //        }
-            //    }
-            //    return (splitted[0] + "=" + splitted[1]);
-            //}
             return "";
         }
 
@@ -136,9 +122,9 @@ namespace WpfApp
             foreach (char ch in input)
             {
                 if (ch == c) return true;
+                else if (ch == Convert.ToChar(c.ToString().ToLower())) return true;
             }
             return false;
         }
     }
 }
-
