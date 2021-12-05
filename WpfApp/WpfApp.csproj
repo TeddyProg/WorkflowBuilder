@@ -119,8 +119,14 @@
     <Compile Include="String_Nodes_Methods_Container.cs" />
     <Compile Include="CodeNode.cs" />
     <Compile Include="ShapeFactory.cs" />
-    <Compile Include="Window1.xaml.cs">
-      <DependentUpon>Window1.xaml</DependentUpon>
+    <Compile Include="DecisionWindow.xaml.cs">
+      <DependentUpon>DecisionWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="InOutWindow.xaml.cs">
+      <DependentUpon>InOutWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="AssignWindow.xaml.cs">
+      <DependentUpon>AssignWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="WorkflowAnalyzer.cs" />
     <Compile Include="WorkflowUtils.cs" />
@@ -137,7 +143,15 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Window1.xaml">
+    <Page Include="DecisionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="InOutWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="AssignWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
