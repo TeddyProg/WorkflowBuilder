@@ -115,7 +115,12 @@ namespace WpfApp
             else
                 OutputLabel.Content = "Bad";
 
-            string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
+            //string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
+            List<Diagram> diags = new List<Diagram>()
+            {
+                Flowchart
+            };
+            string code = WorkflowAnalyzer.MakeProgram(diags);
             //FileName = FileName.Replace('\\', '_').Replace('/', '_');
             fbd.ShowDialog();
             string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
