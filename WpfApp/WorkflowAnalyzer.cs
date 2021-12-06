@@ -158,6 +158,92 @@ namespace WpfApp
             return resNode;
         }
 
+        private static CodeNode MakeCodeSequenceTillNode(DiagramNode begNode, DiagramNode endNode)
+        {
+            if (ReferenceEquals(begNode, endNode))
+                return null;
+
+            var curNode = begNode;
+            CodeNode resNode = GetCodeNode(curNode);
+            CodeNode curCodeNode = resNode;
+            while (curNode != null)
+            {
+                switch (curCodeNode.Type)
+                {
+                    case CodeType.Begin:
+                    case CodeType.Print:
+                    case CodeType.Declare:
+                    case CodeType.Input:
+                    case CodeType.Assign:
+                    case CodeType.Comment:
+                        curNode = curNode.OutgoingLinks[0].Destination;
+                        if (ReferenceEquals(curNode, endNode))
+                            return resNode;
+                        curCodeNode.nextNode = GetCodeNode(curNode);
+                        break;
+                    case CodeType.End:
+                        curNode = null;
+                        break;
+                    case CodeType.Cycle:
+                        {
+                            CycleNode cycNode = curCodeNode as CycleNode;
+                            var links = curNode.GetAllOutgoingLinks();
+                            DiagramLink nextLink = null;
+                            // TODO: Check if it`s only 1 outgoing link for each variant in condition
+                            for (int i = 0; i < links.Count; ++i)
+                            {
+                                var link = links[i];
+                                int ind = link.OriginAnchor; // 3 - false, 2 - true
+                                bool isCon = ReferenceEquals(curNode, link.Destination) || WorkflowUtils.CheckNodesConnected(link.Destination, curNode, false);
+                                bool isEnd = ReferenceEquals(endNode, link.Destination) || WorkflowUtils.CheckNodesConnected(link.Destination, endNode, false);
+                                if (isCon && !isEnd)
+                                {
+                                    cycNode.CycleBody = MakeCodeSequenceTillNode(link.Destination, curNode);
+                                    if (ind == 3)
+                                    {
+                                        cycNode.Condition = "!(" + cycNode.Condition + ")";
+                                    }
+                                }
+                                else
+                                {
+                                    nextLink = link;
+                                }
+                            }
+                            curCodeNode.nextNode = MakeCodeSequenceTillNode(nextLink.Destination, endNode);
+                            curNode = null;
+                            break;
+                        }
+                    case CodeType.Condition:
+                        {
+                            ConditionNode condNode = curCodeNode as ConditionNode;
+                            var links = curNode.GetAllOutgoingLinks();
+                            // TODO: Check if it`s only 1 outgoing link for each variant in condition
+                            for (int i = 0; i < links.Count; ++i)
+                            {
+                                var link = links[i];
+                                int ind = link.OriginAnchor; // 3 - false, 2 - true
+                                if (ind == 2) // true sequence
+                                {
+                                    condNode.TrueNodeSeq = MakeCodeSequenceTillNode(link.Destination, endNode);
+                                }
+                                else if (ind == 3) // false sequence
+                                {
+                                    condNode.FalseNodeSeq = MakeCodeSequenceTillNode(link.Destination, endNode);
+                                }
+                            }
+                            curNode = null;
+                            break;
+                        }
+
+                    case CodeType.Unknown:
+                    default:
+                        return null;
+                }
+                curCodeNode = curCodeNode.nextNode;
+            }
+            return resNode;
+        }
+
         private static CodeNode MakeCodeSequence(DiagramNode dNode)
         {
             CodeNode resNode = GetCodeNode(dNode);
@@ -188,9 +274,10 @@ namespace WpfApp
                             {
                                 var link = links[i];
                                 int ind = link.OriginAnchor; // 3 - false, 2 - true
-                                bool isCon = ReferenceEquals(dNode, link.Destination);
+                                bool isCon = ReferenceEquals(dNode, link.Destination) || WorkflowUtils.CheckNodesConnected(link.Destination, dNode, false);
                                 if (isCon)
                                 {
+                                    cycNode.CycleBody = MakeCodeSequenceTillNode(link.Destination, dNode);
 
                                     if (ind == 3)
                                     {
@@ -309,7 +396,10 @@ namespace WpfApp
                             string condText;
                             ParseDecisionText(node.Text, out condText);
                             var arghs = condText.Split(' ');
-                            result.Add(arghs[0]);
+                            if (!IsNum(arghs[0]))
+                            {
+                                result.Add(arghs[0]);
+                            }
                             if (!IsNum(arghs[2]) )
                             {
                                 result.Add(arghs[2]);
@@ -337,7 +427,7 @@ namespace WpfApp
 
             foreach(string var in variables)
             {
-                res += "\t\tprivate static volatile int V;\n";
+                res += $"\t\tprivate static volatile int {var};\n";
             }
 
             res +=
