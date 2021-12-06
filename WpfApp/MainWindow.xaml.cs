@@ -118,20 +118,39 @@ namespace WpfApp
             //string code = WorkflowAnalyzer.MakeProgram(Flowchart, DiagramListBox.SelectedItem.ToString() + "_program");
             List<Diagram> diags = new List<Diagram>()
             {
-                Flowchart
+                //Flowchart
             };
+
+            foreach (string s in AllPaths)
+            {
+                Diagram d = new Diagram();
+                d.LoadFromXml(s);
+                diags.Add(d);
+            }
+
             string code = WorkflowAnalyzer.MakeProgram(diags);
             //FileName = FileName.Replace('\\', '_').Replace('/', '_');
-            fbd.ShowDialog();
-            string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "C# Code|*.cs";
+            saveFileDialog.Title = "Save an Program Code";
+            saveFileDialog.ShowDialog();
+
+            // If the file name is not an empty string open it for saving.
+            if (saveFileDialog.FileName != "")
+            {
+                using (StreamWriter sw = File.CreateText(saveFileDialog.FileName))
+                {
+                    sw.Write(code);
+                }
+            }
+
+            //    fbd.ShowDialog();
+            //string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
 
             // The line below will create a text file, my_file.txt, in 
             // the Text_Files folder in D:\ drive.
             // The CreateText method that returns a StreamWriter object
-            using (StreamWriter sw = File.CreateText(path))
-            {
-                sw.Write(code);
-            }
+            
 
             var links = Flowchart.Links;
             List<int> inds = new List<int>();
