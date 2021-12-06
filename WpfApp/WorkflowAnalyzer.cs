@@ -109,7 +109,6 @@ namespace WpfApp
                     {
                         string decVar;
                         ParseDeclareText(dNode.Text, out decVar);
-                        
                         resNode = new DeclareNode(decVar);
                         break;
                     }
@@ -189,16 +188,35 @@ namespace WpfApp
                             CycleNode cycNode = curCodeNode as CycleNode;
                             var links = curNode.GetAllOutgoingLinks();
                             DiagramLink nextLink = null;
+                            DiagramLink[] saveLinks = new DiagramLink[links.Count];
+                            for (int j = 0; j < links.Count; ++j)
+                            {
+                                saveLinks[j] = links[j];
+                            }
+                            ShapeNode emptyNode = new ShapeNode();
                             // TODO: Check if it`s only 1 outgoing link for each variant in condition
                             for (int i = 0; i < links.Count; ++i)
                             {
                                 var link = links[i];
                                 int ind = link.OriginAnchor; // 3 - false, 2 - true
-                                bool isCon = ReferenceEquals(curNode, link.Destination) || WorkflowUtils.CheckNodesConnected(link.Destination, curNode, false);
-                                bool isEnd = ReferenceEquals(endNode, link.Destination) || WorkflowUtils.CheckNodesConnected(link.Destination, endNode, false);
+                                var savedDest = link.Destination;
+                                //link.Destination = emptyNode;
+                                DiagramNode[] savedDests = new DiagramNode[links.Count];
+                                for (int j = 0; j < links.Count; ++j)
+                                {
+                                    savedDests[j] = links[j].Destination;
+                                    links[j].Destination = emptyNode;
+                                }
+
+                                bool isCon = ReferenceEquals(curNode, savedDest) || WorkflowUtils.CheckNodesConnected(savedDest, curNode, false);
+                                bool isEnd = ReferenceEquals(endNode, savedDest) || WorkflowUtils.CheckNodesConnected(savedDest, endNode, false);
+                                for (int j = 0; j < links.Count; ++j)
+                                {
+                                    links[j].Destination = savedDests[j];
+                                }
                                 if (isCon && !isEnd)
                                 {
-                                    cycNode.CycleBody = MakeCodeSequenceTillNode(link.Destination, curNode);
+                                    cycNode.CycleBody = MakeCodeSequenceTillNode(savedDests[i], curNode);
                                     if (ind == 3)
                                     {
                                         cycNode.Condition = "!(" + cycNode.Condition + ")";
