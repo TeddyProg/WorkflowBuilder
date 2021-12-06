@@ -456,7 +456,10 @@ namespace WpfApp
 
             foreach (var d in diags)
             {
+                res += "\t\t\tnew Task(() =>\n" +
+                       "\t\t\t{\n";
                 res += MakeProgram(d, "program", "\t\t\t\t");
+                res += "\t\t\t}),\n";
             }
 
             res += footer;
