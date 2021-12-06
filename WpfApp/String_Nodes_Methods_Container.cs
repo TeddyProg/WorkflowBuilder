@@ -9,7 +9,7 @@ namespace WpfApp
 {
     class String_Nodes_Methods_Container
     {
-        string letters = "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюяії";
+        string letters = "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюяії ";
         string numbers = "1234567890.,";
         string symbols = "<>=";
         public string[] Get_Elements_For_Decision(string input)

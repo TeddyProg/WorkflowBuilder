@@ -233,7 +233,7 @@ namespace WpfApp
                     }
                     break;
                 case NodeType.Declare:
-                    if (isDecisionOpened==false)
+                    if (isDecisionOpened == false)
                     {
                         InOutWindow iow = new InOutWindow("Declare: ", new String_Nodes_Methods_Container().Verifying_Declare_InOut_Format(e.Node.Text));
                         iow.Reg_InOut_Del(set_node_string);
