@@ -82,7 +82,7 @@ namespace WpfApp
                         Shape = Shapes.Input,
                         TextFormat = strFormat,
                         Tag = NodeType.Input,
-                        Text = "Input:"
+                        Text = "Input: "
                     };
                 case NodeType.Decision:
                     return new ShapeNode
@@ -91,7 +91,7 @@ namespace WpfApp
                         TextFormat = strFormat,
                         Tag = NodeType.Decision,
                         AnchorPattern = AnchorPattern.Decision2In2Out,
-                        Text = "Decision"
+                        Text = "0 == 0"
                     };
                 case NodeType.Unknown:
                 default:
