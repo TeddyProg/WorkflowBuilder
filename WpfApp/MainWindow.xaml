@@ -13,7 +13,7 @@
             <ColumnDefinition Width="150"/>
         </Grid.ColumnDefinitions>
         <diag:Ruler ShowIcon="False" >
-            <diag:Diagram x:Name="Flowchart" Margin="0,0,0,0" AllowDrop="True" AllowInplaceEdit="True" DataContext="Stretch" VerticalAlignment="Top" HorizontalAlignment="Left" Width="Auto" Height="Auto" NodeDoubleClicked="Flowchart_NodeDoubleClicked"/>
+            <diag:Diagram x:Name="Flowchart" Margin="0,0,0,0" AllowDrop="True" AllowInplaceEdit="True" DataContext="Stretch" VerticalAlignment="Top" HorizontalAlignment="Left" Width="Auto" Height="Auto" NodeDoubleClicked="Flowchart_NodeDoubleClicked" DoubleClicked="Flowchart_DoubleClicked"/>
         </diag:Ruler>
         <diag:NodeListView x:Name="shapeList" Grid.Column="1"/>
         <ListBox HorizontalAlignment="Left" Height="188" Margin="-159,0,0,0" VerticalAlignment="Top" Width="141" x:Name="DiagramListBox" MouseDoubleClick="Mouse_Double_Click"/>
@@ -21,8 +21,9 @@
         <Button Content="Remove diagram" HorizontalAlignment="Left" Margin="-159,260,0,0" VerticalAlignment="Top" Width="141" Height="22" ToolTip="Убрать из списка" Click="Remove_Diagram_Click"/>
         <Button Content="Generate code" HorizontalAlignment="Left" Margin="-159,314,0,0" VerticalAlignment="Top" Width="141" Height="22" Click="Generate_Code_Click"/>
         <TextBox x:Name="CurrentFileName" HorizontalAlignment="Left" Height="23" Margin="-159,201,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="141" Text="Default_diag_1" TextAlignment="Center"/>
-        <Label x:Name="OutputLabel" Content="Status" HorizontalAlignment="Left" Margin="-159,341,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.387,0.382" Height="57" Width="141" MaxHeight="57" MaxWidth="141"/>
+        <Label x:Name="OutputLabel" Content="Status" HorizontalAlignment="Left" Margin="-159,368,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.387,0.382" Height="30" Width="141" MaxHeight="57" MaxWidth="141"/>
         <Button Content="Select" HorizontalAlignment="Left" Margin="-86,287,0,0" VerticalAlignment="Top" Width="68" Height="22" ToolTip="Выбрать диаграммы" Click="Select_Files__Click"/>
         <Button Content="Delete" HorizontalAlignment="Left" Margin="-159,287,0,0" VerticalAlignment="Top" Width="68" Height="22" ToolTip ="Удалить выбранный файл" Click="Delete_File_Click"/>
+        <Button Content="Test diagram" HorizontalAlignment="Left" Margin="-159,341,489.849,0" VerticalAlignment="Top" Width="141" Height="22" ToolTip="Проверить диаграмму" Click="Test_Diagram_Clicked"/>
     </Grid>
 </Window>

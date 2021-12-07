@@ -33,10 +33,11 @@ namespace WpfApp
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Begin));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.End));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Assign));
-            shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
+            //shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Input));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Decision));
+            //Flowchart.LinkShape = LinkShape.Cascading;
 
         }
         List<string> AllPaths = new List<string>();
@@ -101,12 +102,7 @@ namespace WpfApp
         private void Generate_Code_Click(object sender, RoutedEventArgs e)
         {
             Button_Click_Effect(ref sender);
-            var layout = new MindFusion.Diagramming.Wpf.Layout.DecisionLayout();
-            layout.HorizontalPadding = 40;
-            layout.VerticalPadding = 40;
-            layout.StartNode = Flowchart.FindNode(NodeType.Begin);
-            layout.Anchoring = Anchoring.Keep;
-            layout.Arrange(Flowchart);
+            
 
             if (WorkflowValidator.ValidateBlockDiagram(Flowchart))
             {
@@ -309,6 +305,42 @@ namespace WpfApp
                 filename += c;
             }
             return filename;
+        }
+
+        private void Flowchart_DoubleClicked(object sender, DiagramEventArgs e) //Двойное нажатие на область диаграммы
+        {
+            var layout = new MindFusion.Diagramming.Wpf.Layout.DecisionLayout
+            {
+                HorizontalPadding = 40,
+                VerticalPadding = 40,
+                StartNode = Flowchart.FindNode(NodeType.Begin),
+                Anchoring = Anchoring.Keep
+            };
+            layout.Arrange(Flowchart);
+        }
+
+        private void Test_Diagram_Clicked(object sender, RoutedEventArgs e) //Тест диаграммы
+        {
+            string message;
+            if (Flowchart != null)
+            {
+                bool isCorrect = WorkflowValidator.ValidateBlockDiagram(Flowchart, out message);
+                message = isCorrect ? "Diagram seems ok :-) " : message;
+                // Initializes the variables to pass to the MessageBox.Show method.
+                //string message = "You did not enter a server name. Cancel this operation?";
+                
+            }
+            else
+            {
+                message = "Seems like no diagram is loaded, load something and then test)";
+            }
+
+            string caption = "Testing result";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            
+            // Displays the MessageBox.
+            System.Windows.Forms.MessageBox.Show(message, caption, buttons);
+
         }
     }
 }

@@ -85,6 +85,12 @@ namespace WpfApp
 
         public static bool ValidateBlockDiagram(Diagram diag)
         {
+            return ValidateBlockDiagram(diag, out _);
+        }
+
+        public static bool ValidateBlockDiagram(Diagram diag, out string message)
+        {
+            message = "OK";
             ///Checking that number of begin and end nodes equals 1
             {
                 var nodes = diag.Nodes;
@@ -102,14 +108,20 @@ namespace WpfApp
                     }
                 }
                 if (numBegs != 1 || numEnds != 1)
+                {
+                    message = "Diagram has no beggining and ending nodes";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////
 
             ///Checking that there is only one link from starting node and no link into it
             {
                 if (!CheckNumLinksOfNode(diag, NodeType.Begin, 0, 1))
+                {
+                    message = "Diagram has wrong linking of beggining node";
                     return false;
+                }
 
             }
             ////////////////////////////////////////////////////////
@@ -117,39 +129,78 @@ namespace WpfApp
             ///Checking that there is no link from ending node
             {
                 if (!CheckNumOutgoingLinksOfNode(diag, NodeType.End, 0))
+                {
+                    message = "Ending node has output link!";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////////
 
             ///Checking that num of incoming and outgoing links of print nodes equals 1
             {
                 if (!CheckNumOutgoingLinksOfNode(diag, NodeType.Print, 1))
+                {
+                    message = "Some of print nodes have too many or no one outgoing link";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////
 
             ///Checking that num of incoming and outgoing links of assign nodes equals 1
             {
                 if (!CheckNumOutgoingLinksOfNode(diag, NodeType.Assign, 1))
+                {
+                    message = "Some of assign nodes have too many or no one outgoing link";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////
 
             ///Checking that num of incoming and outgoing links of declare nodes equals 1
             {
                 if (!CheckNumLinksOfNode(diag, NodeType.Declare, 1, 1))
+                {
+                    message = "Some of declare nodes have too many or no one outgoing and incoming link";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////
 
             ///Checking that num of incoming and outgoing links of declare nodes equals 1
             {
                 if (!CheckNumOutgoingLinksOfNode(diag, NodeType.Decision, 2))
+                {
+                    message = "Some of decision nodes have too many or no one outgoing links";
                     return false;
+                }
             }
             ////////////////////////////////////////////////////
 
+            ///Checking that beggining and ending nodes are connected in any way
+            {
+                var begNode = diag.FindNode(NodeType.Begin);
+                var endNode = diag.FindNode(NodeType.End);
+                if (!WorkflowUtils.CheckNodesConnected(begNode, endNode, false))
+                {
+                    message = "Begin and end nodes on diagram are not connected!";
+                    return false;
+                }
+            }
+            ////////////////////////////////////////////////////
+
+            /////Checking that num of incoming and outgoing links of declare nodes equals 1
+            //{
+            //    var begNode = diag.FindNode(NodeType.Begin);
+            //    var endNode = diag.FindNode(NodeType.End);
+            //    if (!WorkflowUtils.CheckNodesConnected(begNode, endNode, false))
+            //    {
+            //        return false;
+            //    }
+            //}
+            //////////////////////////////////////////////////////
+
             return true;
         }
+
     }
 }
