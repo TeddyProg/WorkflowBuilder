@@ -1,21 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using MindFusion.Diagramming.Wpf;
 using System.IO;
 using System.Windows.Forms;
-
+using Microsoft.CSharp;
+using System.CodeDom.Compiler;
+using System.Diagnostics;
 namespace WpfApp
 {
     public partial class MainWindow : Window
@@ -26,18 +17,12 @@ namespace WpfApp
             InitializeComponent();
             Flowchart.AllowInplaceEdit = false;
 
-            //shapeList.Items.Add(new ShapeNode { Shape = Shapes.Rectangle });
-            StringFormat strFormat = new StringFormat();
-            strFormat.LineAlignment = StringAlignment.Center;
-            strFormat.Alignment = StringAlignment.Center;
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Begin));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.End));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Assign));
-            //shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Declare));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Print));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Input));
             shapeList.Items.Add(ShapeFactory.CreateNode(NodeType.Decision));
-            //Flowchart.LinkShape = LinkShape.Cascading;
 
         }
         List<string> AllPaths = new List<string>();
@@ -125,7 +110,6 @@ namespace WpfApp
             }
 
             string code = WorkflowAnalyzer.MakeProgram(diags);
-            //FileName = FileName.Replace('\\', '_').Replace('/', '_');
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Filter = "C# Code|*.cs";
             saveFileDialog.Title = "Save an Program Code";
@@ -140,23 +124,24 @@ namespace WpfApp
                 }
             }
 
-            //    fbd.ShowDialog();
-            //string path = $"{fbd.SelectedPath}/{DiagramListBox.SelectedItem.ToString()}.txt";
-
-            // The line below will create a text file, my_file.txt, in 
-            // the Text_Files folder in D:\ drive.
-            // The CreateText method that returns a StreamWriter object
-            
-
-            var links = Flowchart.Links;
-            List<int> inds = new List<int>();
-            foreach (var link in links)
+            var result = System.Windows.MessageBox.Show("Do you want to run this program?", "Next step", MessageBoxButton.YesNo);
+            switch (result)
             {
-                inds.Add(link.OriginIndex);
-                inds.Add(link.DestinationIndex);
-
+                case MessageBoxResult.Yes:
+                    CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+                    ICodeCompiler icc = codeProvider.CreateCompiler();
+                    string output = saveFileDialog.FileName.Replace(".cs", ".exe");
+                    System.CodeDom.Compiler.CompilerParameters parameters = new CompilerParameters();
+                    //Make sure we generate an EXE, not a DLL
+                    parameters.GenerateExecutable = true;
+                    parameters.OutputAssembly = output;
+                    CompilerResults results = icc.CompileAssemblyFromSource(parameters, code);
+                    Process.Start(output);
+                    break;
+                case MessageBoxResult.No:
+                    break;
             }
-            int a = 0;
+
         }
 
         private void Mouse_Double_Click(object sender, RoutedEventArgs e)

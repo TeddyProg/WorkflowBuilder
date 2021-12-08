@@ -483,7 +483,8 @@ namespace WpfApp
             "\t\t\t\ttasks[i].Start();\n" + 
             "\t\t\t}\n" + 
             "\n" + 
-            "\t\t\tTask.WaitAll(tasks);\n" + 
+            "\t\t\tTask.WaitAll(tasks);\n" +
+            "\t\t\tConsole.ReadKey();" +
             "\n" + 
             "\t\t}\n" + 
             "\t}\n" +
